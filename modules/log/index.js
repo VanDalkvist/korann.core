@@ -1,10 +1,20 @@
+// #region dependents
+
 var winston = require('winston');
+
+// #region initialization
+
 var ENV = process.env.NODE_ENV;
 
-function getLogger(module) {
-    var path = module.filename.split('/').slice(-2).join('/'); //отобразим метку с именем файла, который выводит сообщение
+// #region private functions
 
-    return new winston.Logger({
+function getLogger(module) {
+    var path = module.filename.split('/').slice(-2).join('/');
+    return new winston.Logger(getConfig(path));
+}
+
+function getConfig(path){
+    return {
         transports: [
             new winston.transports.Console({
                 colorize: true,
@@ -12,7 +22,9 @@ function getLogger(module) {
                 label: path
             })
         ]
-    });
+    };
 }
 
-module.exports = getLogger;
+// #region exports
+
+exports.getLogger = getLogger;
