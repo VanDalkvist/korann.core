@@ -1,34 +1,41 @@
 // #region dependents
 
 var path = require('path');
+var http = require('http');
 var express = require('express');
-var settings = require('./modules/config');
-var logger = require('./modules/log/').getLogger(module);
+var settings = require('config');
+var logger = require('log').getLogger(module);
 
 var app = express();
 
-// #region API initialization
-
-require('./modules/api').init(app);
-require('./modules/api/errors').init(app);
+http.createServer(app).listen(settings.port, function () {
+    logger.debug("Hello, I'm app on port " + settings.port + "...");
+});
 
 // #region environment
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+// #region default express middleware
+
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.cookieParser('your secret here'));
 
+// #region routes
+
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// development only
+// #region API initialization
+
+require('api').init(app);
+
+// #region error handling
+
+require('api/errors').init(app);
 if ('development' == app.get('env')) {
     app.use(express.errorHandler());
 }
-
-app.listen(settings.port, function () {
-    logger.info("Hello, app on port " + settings.port);
-});

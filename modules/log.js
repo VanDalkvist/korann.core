@@ -1,6 +1,7 @@
 // #region dependents
 
 var winston = require('winston');
+var path = require('path');
 
 // #region initialization
 
@@ -9,8 +10,8 @@ var ENV = process.env.NODE_ENV;
 // #region private functions
 
 function getLogger(module) {
-    var path = module.filename.split('/').slice(-2).join('/');
-    return new winston.Logger(getConfig(path));
+    var localPath = module.filename.split(path.sep).slice(-2).join('/');
+    return new winston.Logger(getConfig(localPath));
 }
 
 function getConfig(path){
