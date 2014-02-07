@@ -8,11 +8,14 @@ var logger = require('log').getLogger(module);
 
 var app = express();
 
+// todo: add modules interceptors
+
 http.createServer(app).listen(settings.port, function () {
     logger.debug("Hello, I'm app on port " + settings.port + "...");
 });
 
 // #region environment
+// todo: create environment module and move configuring there
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -25,6 +28,8 @@ app.use(express.json());
 app.use(express.cookieParser('your secret here'));
 
 // #region routes
+
+// todo: create routes module and move configuring there
 
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));

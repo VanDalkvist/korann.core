@@ -11,7 +11,7 @@ function init(app) {
 
 // #region private functions
 
-function notFoundError(req, res) { // todo: investigate error handling
+function notFoundError(req, res) {
     res.status(404);
     logger.debug('Not found URL: %s', req.url);
     res.render('404');
@@ -19,7 +19,7 @@ function notFoundError(req, res) { // todo: investigate error handling
 
 function internalError(err, req, res, next) {
     res.status(err.status || 500);
-    logger.error('Internal error(%d): %s', res.statusCode, err.message);
+    logger.error('Internal error(%d): %s %s', res.statusCode, err.message, err.stack);
     res.send({ error: err.message });
 };
 

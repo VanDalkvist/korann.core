@@ -6,7 +6,9 @@
 
 var mongoose = require('mongoose');
 var settings = require('config');
-var log = require('log').getLogger(module);
+var logger = require('log').getLogger(module);
+var ProductModel = require('./models/product');
+var CategoryModel = require('./models/category');
 
 // #region initialization
 
@@ -15,19 +17,25 @@ function init() {
     var dbConnection = mongoose.connection;
 
     dbConnection.on('error', connectionError);
+
+    logger.info("Initialization connection to DB...");
     dbConnection.once('open', connectionEstablished);
 
-    var Schema = mongoose.Schema;
+    return {
+        ProductModel: ProductModel,
+        CategoryModel: CategoryModel
+    };
 }
 
 // #region private methods 
 
 function connectionError(err) {
-    log.error('connection error:', err.message);
+    logger.error('connection error:', err.message);
+    throw err;
 }
 
 function connectionEstablished() {
-    log.info("Connected to DB!");
+    logger.info("Connected to db established.");
 }
 
 // #region exports
