@@ -5,7 +5,7 @@
 // #region dependents
 
 var logger = require('log').getLogger(module);
-var config = require('config');
+var express = require('express');
 
 // #region initialization
 
@@ -14,7 +14,9 @@ function init(app) {
     app.use(internalError);
 
     // todo: extract 'development' type to config env type;
-    (config.env === 'development') && app.use(express.errorHandler());
+    app.configure('development', function () {
+        app.use(express.errorHandler());
+    })
 }
 
 // #region private functions

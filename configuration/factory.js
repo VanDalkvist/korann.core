@@ -4,27 +4,29 @@
 
 // #region dependents
 
-var http = require('http');
 var express = require('express');
 var config = require('config');
 var logger = require('log').getLogger(module);
+
 var environment = require('./environment');
 var routes = require('./routes');
 var errors = require('./errors');
+var dbconnect = require('./dbconnect');
+var sessions = require('./sessions');
 
 // #region initialization
 
 function init() {
     var app = express();
-    var server = http.createServer(app);
-
-    server.listen(config.port, serverCallback);
-
-    // #region configuration
+    app.listen(config.port, listenCallback);
 
     // todo: add modules interceptors
 
+    // #region configuration
+
     environment.init(app);
+    dbconnect.init();
+    sessions.init(app);
     routes.init(app);
     errors.init(app);
 
@@ -34,7 +36,7 @@ function init() {
 
 // #region private methods
 
-function serverCallback() {
+function listenCallback() {
     logger.debug("Hello, I'm app on port " + config.port + " ...");
 }
 
