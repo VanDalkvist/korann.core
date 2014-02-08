@@ -10,6 +10,23 @@
         "jade": "*",
         "mongoose": "*",
         "winston": "*",
-        "nconf": "*"
-    }
+        "nconf": "*",
+        "passport": "*",
+        "connect-mongo": "*"
+    },
+    "main": "app.js",
+    "devDependencies": {
+
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://I_van@bitbucket.org/I_van/korann.git"
+    },
+    "keywords": [
+        "korann",
+        "korann.core",
+        "api"
+    ],
+    "author": "I_van",
+    "license": "ISC"
 }

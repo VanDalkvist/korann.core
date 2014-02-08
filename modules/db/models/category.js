@@ -23,8 +23,7 @@ function initModel() {
 
     // #region model
 
-    var model = mongoose.model('Category', CategorySchema);
-    return  model;
+    return mongoose.model('Category', CategorySchema);
 }
 
 // #region private methods

@@ -9,7 +9,10 @@ nconf.argv()
 
 var settings = {
     port: nconf.get('port'),
-    db: nconf.get('korannDB')
+    db: nconf.get('korannDB'),
+    session: nconf.get('session'),
+    root: process.cwd(),
+    env: nconf.get('env')
 };
 
 // #region exports
