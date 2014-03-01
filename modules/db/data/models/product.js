@@ -5,7 +5,7 @@
 // #region dependents
 
 var mongoose = require('mongoose');
-var ImageSchema = require('./schemas/image');
+var ImageSchema = require('../schemas/image');
 
 // #region initialization
 
@@ -16,11 +16,10 @@ function initModel() {
 
     var ProductSchema = new Schema({
         name: { type: String, required: true },
-        screenName: { type: String, required: true },
-        source: {type: String, required: true },
         category: { type: String, required: true },
         description: { type: String, required: true },
-        images: [ImageSchema]
+        brand: { type: String, required: true },
+        images: [ ImageSchema ]
     });
 
     // #region validation

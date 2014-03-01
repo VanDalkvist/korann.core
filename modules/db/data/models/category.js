@@ -5,7 +5,7 @@
 // #region dependents
 
 var mongoose = require('mongoose');
-var ImageSchema = require('./schemas/image');
+var ImageSchema = require('../schemas/image');
 
 // #region initialization
 

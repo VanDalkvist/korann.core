@@ -16,9 +16,8 @@ function init() {
 
     dbConnection.on('error', connectionError);
 
-    logger.info("Initialization connection to DB '" + dbConnection.name + "' ...");
     dbConnection.once('open', function connectionEstablished() {
-        logger.info("Connected to db '" + dbConnection.name + "' established.");
+        logger.debug("Connection to db '" + dbConnection.name + "' established.");
     });
 }
 

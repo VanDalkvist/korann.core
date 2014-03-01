@@ -13,6 +13,8 @@ var routes = require('./routes');
 var errors = require('./errors');
 var dbconnect = require('./dbconnect');
 var sessions = require('./sessions');
+var auth = require('auth');
+var api = require('api');
 
 // #region initialization
 
@@ -28,7 +30,9 @@ function init() {
     dbconnect.init();
     sessions.init(app);
     routes.init(app);
+    auth.init(app);
     errors.init(app);
+    api.init(app);
 
     // todo: add singleton support
     return app;

@@ -11,12 +11,13 @@
         "mongoose": "*",
         "winston": "*",
         "nconf": "*",
-        "passport": "*",
-        "connect-mongo": "*"
+        "connect-mongo": "*",
+        "async": "*",
+        "node-uuid": "*",
+        "express-error": "*"
     },
     "main": "app.js",
     "devDependencies": {
-
     },
     "repository": {
         "type": "git",
@@ -25,7 +26,11 @@
     "keywords": [
         "korann",
         "korann.core",
-        "api"
+        "api",
+        "кора",
+        "кора нн",
+        "косметика",
+        "кора косметика"
     ],
     "author": "I_van",
     "license": "ISC"

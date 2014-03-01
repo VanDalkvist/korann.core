@@ -28,8 +28,8 @@ function init(app) {
 
     // #region middleware
 
-    logger.debug("Initialization of mongodb session support... ");
     app.use(express.session(options));
+    logger.debug("Initialization of mongodb session support finished successfully.");
 }
 
 // #region exports

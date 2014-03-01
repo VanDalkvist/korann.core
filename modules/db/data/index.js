@@ -1,8 +1,9 @@
 /*
- *  Models
+ *  List of API models
  */
 
 // #region dependents
+
 var ProductModel = require('./models/product');
 var CategoryModel = require('./models/category');
 
@@ -15,9 +16,6 @@ function init() {
     };
 }
 
-// #region private methods 
-
-
 // #region exports
 
-exports.init = init;
+module.exports = init();

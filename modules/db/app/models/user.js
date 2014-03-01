@@ -15,28 +15,27 @@ function initModel() {
     // #region schemas
 
     var UserSchema = new Schema({
-        name: {
-            type: String,
-            unique: true,
-            required: true
-        },
+        name: { type: String, unique: true, required: true },
         hashedPassword: { type: String, required: true },
         salt: { type: String, required: true },
-        created: { type: Date, default: Date.now }
+        created: { type: Date, default: Date.now },
+        roles: [
+            { type: String, required: true }
+        ]
     });
 
     // #region configuration functions
 
-    User.methods.encryptPassword = function (password) {
+    UserSchema.methods.encryptPassword = function (password) {
         return crypto.createHmac('sha1', this.salt).update(password).digest('hex');
         //more secure - return crypto.pbkdf2Sync(password, this.salt, 10000, 512);
     };
 
-    User.virtual('userId').get(function () {
+    UserSchema.virtual('userId').get(function () {
         return this.id;
     });
 
-    User.virtual('password')
+    UserSchema.virtual('password')
         .set(function (password) {
             this._plainPassword = password;
             this.salt = crypto.randomBytes(32).toString('base64');
@@ -47,7 +46,7 @@ function initModel() {
             return this._plainPassword;
         });
 
-    User.methods.checkPassword = function (password) {
+    UserSchema.methods.checkPassword = function (password) {
         return this.encryptPassword(password) === this.hashedPassword;
     };
 

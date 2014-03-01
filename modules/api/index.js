@@ -8,8 +8,9 @@ var api = {
     products: require('./products'),
     categories: require('./categories')
 };
+
 var logger = require('log').getLogger(module);
-var models = require('db/models').init();
+var models = require('db/data');
 
 // #region initialization
 
@@ -17,8 +18,7 @@ function init(app) {
     app.get('/api', apiIndex);
 
     for (var key in api) {
-        logger.debug("Initialization of " + key + " API module...");
-        api[key].init(app);
+        api[key].init(app, models);
         logger.debug("Initialization of " + key + " API module finished successfully.");
     }
 }

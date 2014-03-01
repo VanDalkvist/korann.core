@@ -19,6 +19,7 @@ function init(app) {
     app.use(express.favicon());
     app.use(express.logger('dev'));
     app.use(express.json());
+    app.use(express.bodyParser());
     app.use(express.cookieParser('your secret here'));
 }
 
