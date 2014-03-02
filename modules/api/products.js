@@ -21,7 +21,7 @@ function init(app, models) {
     });
 
     app.get('/api/products/:id', function (req, res) {
-        return ProductModel.find({ _id: req.params.id }, function (err, product) {
+        return ProductModel.findById(req.params.id, function (err, product) {
             if (err) return internalError(err, res);
 
             return product;
@@ -45,37 +45,79 @@ function init(app, models) {
             }
 
             if (err.name == 'ValidationError') {
-                res.statusCode = 400;
-                res.send({ error: 'Validation error' });
-            } else internalError(err, res);
+                return validationError(err, res);
+            }
 
-            log.error('Internal error(%d): %s', res.statusCode, err.message);
+            return internalError(err, res);
         });
     });
 
     app.put('/api/products/:id', function (req, res) {
-        res.send({response: "PUT /api/products/:id"}); // not implemented
+        return ProductModel.findById(req.params.id, function (err, product) {
+            if (!product) return notFound(res);
+
+            // todo: use mapper
+
+            product.name = req.body.name;
+            product.description = req.body.description;
+            product.category = req.body.category;
+            product.images = req.body.images;
+            product.brand = req.body.brand;
+
+            return product.save(function saveCallback(err) {
+                if (err) {
+                    if (err.name == 'ValidationError') return validationError(res);
+
+                    return internalError(err, res);
+                } else {
+                    logger.info("product updated");
+                    return success(res, product);
+                }
+            });
+        });
     });
 
     app.delete('/api/products/:id', function (req, res) {
-        res.send({response: "DELETE /api/products/:id"}); // not implemented
+        return ProductModel.findById(req.params.id, function (err, product) {
+            if (err) return internalError(err, res);
+
+            if (!product) return notFound(res);
+
+            return product.remove(function (err) {
+                if (err) return internalError(err, res);
+
+                logger.info("product removed");
+                return success(res);
+            });
+        });
     });
 }
 
 // #region private methods
 
-// todo: move to shared module
+// todo: move to custom errors
 function success(res, data) {
     return res.send({ status: '200', data: data });
 }
 
-// todo: move to errors module
 function internalError(err, res) {
     var statusCode = 500;
 
     res.statusCode = statusCode;
     logger.error('Internal error(%d): %s', res.statusCode, err.message);
     return res.send({ error: {status: statusCode, message: 'Server error'} });
+}
+
+function notFound(res) {
+    res.statusCode = 404;
+    logger.error('Not found error(%d): %s', res.statusCode, 'Not found');
+    return res.send({ error: { status: res.statusCode, message: 'Not found' } });
+}
+
+function validationError(err, res) {
+    res.statusCode = 400;
+    logger.error('Validation error(%d): %s', res.statusCode, 'Validation error' + err.message);
+    return res.send({ error: { status: res.statusCode, message: 'Validation error: ' + err.message } });
 }
 
 // #region exports
