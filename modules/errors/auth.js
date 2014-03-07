@@ -13,6 +13,7 @@ function AuthError(status, message, callback) {
     Error.apply(this, arguments);
     Error.captureStackTrace(this, AuthError);
 
+    this.status = status;
     this.message = message || http.STATUS_CODES[status] || "Error";
 }
 

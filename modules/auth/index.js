@@ -24,7 +24,7 @@ function init(app) {
 function appAuth(req, res, next) {
     var appAuthInfo = {
         appId: req.body.appId,
-        secretHash: req.body.secret,
+        secretHash: req.body.appSecret,
         credentials: req.body.cred
     };
 
@@ -42,11 +42,12 @@ function appAuth(req, res, next) {
                 expired: Date.now() // todo: set expired time
             });
 
-            appSession.save({}, function saveCallback(err) {
+            appSession.save(function saveCallback(err) {
                 if (err) return next(err);
 
                 logger.debug("Session for app " + clientApp.appId + " saved successfully");
 
+                // todo: send session viewModel instead appSession
                 res.send(appSession);
             });
         });
@@ -105,7 +106,7 @@ function calculateHash(secret) {
 function verifyAppAccess(req, res, next) {
     var appInfo = {
         appId: req.body.appId,
-        accessToken: req.body.token,
+        accessToken: req.body.appSecret,
         credentials: req.body.cred
     };
 
