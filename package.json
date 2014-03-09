@@ -14,7 +14,8 @@
         "connect-mongo": "*",
         "async": "*",
         "node-uuid": "*",
-        "express-error": "*"
+        "express-error": "*",
+        "underscore": "*"
     },
     "main": "app.js",
     "devDependencies": {

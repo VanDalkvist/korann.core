@@ -5,7 +5,7 @@
 // #region dependents
 
 var logger = require('log').getLogger(module);
-var models = require('db/appModels').init();
+var models = require('db/app');
 var crypto = require('utils/crypto');
 var date = require('utils/date');
 var uuid = require('node-uuid');
@@ -59,4 +59,4 @@ function saveClientApp(clientApp) {
 
 // #region exports
 
-module.exports = init();
+exports.run = init;

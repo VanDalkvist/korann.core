@@ -13,7 +13,7 @@ var logger = require('log').getLogger(module);
 
 function init(app) {
     app.post('/app/auth', appAuth);
-    app.post('/user/auth', userAuth);
+    app.post('/user/login', userAuth);
     app.all('/api/*', verifyAppAccess);
 
     logger.debug("Initialization of authentication finished successfully.");
@@ -47,8 +47,7 @@ function appAuth(req, res, next) {
 
                 logger.debug("Session for app " + clientApp.appId + " saved successfully");
 
-                // todo: send session viewModel instead appSession
-                res.send(appSession);
+                res.send({ token: appSession.token });
             });
         });
     });
@@ -61,32 +60,32 @@ function userAuth(req, res, next) {
         if (!credentials)
             return next(new Error("Invalid credentials."));
 
-        models.UserModel.findOne({name: credentials.user}, function findUser(err, user) {
+        models.UserModel.findOne({name: credentials.username}, function findUser(err, user) {
             if (err) return next(err);
+
+            if (!user) return next(new errors.AuthError(404, "User not found"));
 
             if (!user.checkPassword(credentials.password))
                 next(new Error("Invalid password"));
 
-            var userToken = ""; // todo: generate user token
+            var userToken = "xxxx"; // todo: generate user token
             var userSession = new models.UserSessionModel({
                 userId: user._id,
-                token: userToken,
-                expired: Date.now() //todo: set expired time
-            });
+                token: 'zsdrhxrlkgsderjkgnbziserxBOZIUSREBG',
+                expired: Date.now()
+            }); //todo: set expired time
 
-            userSession.save({}, function saveCallback(err) {
+            userSession.save(function saveCallback(err) {
                 if (err) return next(err);
 
-                logger.debug("Session for user " + user.name + " saved successfully");
+                logger.debug("Session for user '" + user.name + "' saved successfully");
 
                 res.send({
                     name: user.name,
                     roles: user.roles,
-                    token: userToken
+                    token: userSession.token
                 });
             });
-
-            next(null);
         });
     });
 }
@@ -106,7 +105,7 @@ function calculateHash(secret) {
 function verifyAppAccess(req, res, next) {
     var appInfo = {
         appId: req.body.appId,
-        accessToken: req.body.appSecret,
+        accessToken: req.body.token,
         credentials: req.body.cred
     };
 
@@ -118,7 +117,7 @@ function verifyAppAccess(req, res, next) {
         if (appSession.token !== appInfo.accessToken)
             return next(new errors.AuthError(401, "Invalid access token."));
 
-        next(null, credentials); // if success
+        next(null, appInfo.credentials);
     });
 }
 

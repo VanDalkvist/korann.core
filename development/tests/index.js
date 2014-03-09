@@ -4,10 +4,17 @@
 
 // #region dependents
 
+var userTests = require('../data/users');
+
 // #region initialization
 
-function init(app) {
-
+function init() {
+    var user = {
+        name: 'admin',
+        password: 'admin',
+        roles: ['client', 'admin', 'manager']
+    };
+    userTests.run(user);
 }
 
 // #region private methods 
@@ -15,4 +22,4 @@ function init(app) {
 
 // #region exports
 
-exports.init = init;
+exports.run = init;

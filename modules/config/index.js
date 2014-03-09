@@ -1,5 +1,6 @@
 var path = require('path');
 var nconf = require('nconf');
+var _ = require('underscore');
 
 nconf.argv()
     .env()
@@ -7,13 +8,10 @@ nconf.argv()
 
 // #region private functions
 
-var settings = {
-    port: nconf.get('port'),
-    db: nconf.get('korannDB'),
-    session: nconf.get('session'),
+var settings = _.extend(nconf.get(), {
     root: process.cwd(),
     env: nconf.get('env')
-};
+});
 
 // #region exports
 

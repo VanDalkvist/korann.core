@@ -21,7 +21,8 @@ function initModel() {
         created: { type: Date, default: Date.now },
         roles: [
             { type: String, required: true }
-        ]
+        ],
+        screenName: { type: String }
     });
 
     // #region configuration functions

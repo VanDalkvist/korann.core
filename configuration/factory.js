@@ -26,11 +26,13 @@ function init() {
 
     // #region configuration
 
+    // todo: use my train module
+
     environment.init(app);
     dbconnect.init();
     sessions.init(app);
-    routes.init(app);
     auth.init(app);
+    routes.init(app);
     errors.init(app);
     api.init(app);
 

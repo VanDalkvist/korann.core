@@ -5,12 +5,11 @@
 // #region dependents
 
 var mongoose = require('mongoose');
-var settings = require('config');
 var logger = require('log').getLogger(module);
 
 // #region initialization
 
-function init() {
+function init(settings, onConnectionEstablish) {
     mongoose.connect(settings.db.connectionString);
     var dbConnection = mongoose.connection;
 
@@ -18,6 +17,8 @@ function init() {
 
     dbConnection.once('open', function connectionEstablished() {
         logger.debug("Connection to db '" + dbConnection.name + "' established.");
+
+        if (onConnectionEstablish) onConnectionEstablish();
     });
 }
 
