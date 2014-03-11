@@ -9,12 +9,12 @@ var util = require('util');
 
 // #region initialization
 
-function AuthError(status, message, callback) {
+function AuthError(code, message, callback) {
     Error.apply(this, arguments);
     Error.captureStackTrace(this, AuthError);
 
-    this.status = status;
-    this.message = message || http.STATUS_CODES[status] || "Error";
+    this.code = code;
+    this.message = message || http.STATUS_CODES[code] || "Error";
 }
 
 // #region private methods

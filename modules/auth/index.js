@@ -31,6 +31,8 @@ function appAuth(req, res, next) {
     models.ClientAppModel.findOne({appId: appAuthInfo.appId}, function findAppCallback(err, clientApp) {
         if (err) return next(new errors.AuthError(400, err.message));
 
+        if (!clientApp) return next(new errors.AuthError(401, "Invalid appId."));
+
         checkSecret(appAuthInfo, clientApp, function createSession(err) {
             if (err) return next(err);
 

@@ -32,9 +32,9 @@ function init() {
     dbconnect.init();
     sessions.init(app);
     auth.init(app);
+    api.init(app);
     routes.init(app);
     errors.init(app);
-    api.init(app);
 
     // todo: add singleton support
     return app;

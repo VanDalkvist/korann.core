@@ -9,7 +9,6 @@ var logger = require('log').getLogger(module);
 // #region initialization
 
 function init(app, models) {
-
     var ProductModel = models.ProductModel;
 
     app.get('/api/products', function (req, res) {

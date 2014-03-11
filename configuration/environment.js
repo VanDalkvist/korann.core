@@ -6,12 +6,12 @@
 
 var path = require('path');
 var express = require('express');
-var settings = require('config');
+var config = require('config');
 
 // #region initialization
 
 function init(app) {
-    app.set('views', path.join(settings.root, 'views'));
+    app.set('views', path.join(config.root, 'views'));
     app.set('view engine', 'jade');
 
 // #region default express middleware
