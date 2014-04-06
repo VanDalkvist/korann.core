@@ -17,7 +17,7 @@ function initModel() {
         userId: { type: String, required: true },
         token: { type: String, required: true },
         expired: { type: Date, required: true }
-    });
+    }, { collection: 'user.sessions' });
 
     // #region model
 

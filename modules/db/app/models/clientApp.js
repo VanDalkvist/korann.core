@@ -21,7 +21,7 @@ function initModel() {
         ],
         name: { type: String },
         createdAt: {type: Date, default: Date.now }
-    });
+    }, { collection: 'apps' });
 
     // #region model
 
