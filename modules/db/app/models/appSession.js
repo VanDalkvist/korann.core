@@ -16,7 +16,7 @@ function initModel() {
     var AppSessionSchema = new Schema({
         appId: { type: String, required: true },
         token: { type: String, required: true },
-        expired: { type: Date, required: true }
+        expired: { type: Number, required: true }
     }, { collection: 'app.sessions' });
 
     // #region model

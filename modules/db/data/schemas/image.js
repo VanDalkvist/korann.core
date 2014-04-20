@@ -25,8 +25,6 @@ function initSchema() {
     return ImageSchema;
 }
 
-// #region private methods
-
 // #region exports
 
 module.exports = initSchema();

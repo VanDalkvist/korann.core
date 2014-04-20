@@ -15,8 +15,9 @@ function initModel() {
 
     var UserSessionSchema = new Schema({
         userId: { type: String, required: true },
-        token: { type: String, required: true },
-        expired: { type: Date, required: true }
+        appId: { type: String, required: true },
+        expired: { type: Number, required: true },
+        context: { type: Schema.Types.Mixed }
     }, { collection: 'user.sessions' });
 
     // #region model

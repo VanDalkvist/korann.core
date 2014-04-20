@@ -3,13 +3,10 @@
     "db": {
         "connectionString": "mongodb://localhost/korann"
     },
-    "session": {
-        "secret": "ZEKJhaefkKLS",
-        "key": "sid",
-        "cookie": {
-            "path": "/",
-            "httpOnly": true,
-            "maxAge": null
-        }
+    "appSession": {
+        "expires": 5184000000
+    },
+    "userSession": {
+        "expires": 86400000
     }
 }

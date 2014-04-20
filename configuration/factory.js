@@ -12,7 +12,6 @@ var environment = require('./environment');
 var routes = require('./routes');
 var errors = require('./errors');
 var dbconnect = require('./dbconnect');
-var sessions = require('./sessions');
 var auth = require('auth');
 var api = require('api');
 
@@ -30,7 +29,6 @@ function init() {
 
     environment.init(app);
     dbconnect.init();
-    sessions.init(app);
     auth.init(app);
     api.init(app);
     routes.init(app);

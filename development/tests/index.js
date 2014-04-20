@@ -5,6 +5,7 @@
 // #region dependents
 
 var userTests = require('../data/users');
+var appTests = require('../data/clientApp');
 
 // #region initialization
 
@@ -14,7 +15,8 @@ function init() {
         password: 'admin',
         roles: ['client', 'admin', 'manager']
     };
-    userTests.run(user);
+//    userTests.run(user);
+    appTests.run();
 }
 
 // #region private methods 
