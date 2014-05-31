@@ -14,12 +14,13 @@ function getLogger(module) {
     return new winston.Logger(getConfig(localPath));
 }
 
-function getConfig(path){
+function getConfig(path) {
     return {
         transports: [
             new winston.transports.Console({
                 colorize: true,
                 level: ENV == 'development' ? 'debug' : 'error',
+                timestamp: true,
                 label: path
             })
         ]

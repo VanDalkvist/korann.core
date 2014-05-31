@@ -12,7 +12,7 @@ var config = require('config');
 
 function init(app) {
     // todo: add log initialization message
-    app.use(app.router);
+
     app.use(express.static(path.join(config.root, 'public')));
 }
 

@@ -9,6 +9,7 @@ var errors = require('errors/auth');
 var crypto = require('utils/crypto');
 var logger = require('log').getLogger(module);
 var config = require('config');
+var async = require('async');
 
 // #region initialization
 
@@ -16,6 +17,7 @@ function init(app) {
     app.post('/app/auth', appAuth);
     app.post('/user/login', userAuth);
     app.post('/user/logout', userLogout);
+
     app.all('/api/*', verifyAppAccess);
 
     logger.debug("Initialization of authentication finished successfully.");
@@ -24,35 +26,45 @@ function init(app) {
 // #region private methods
 
 function appAuth(req, res, next) {
-    var appAuthInfo = {
-        appId: req.body.appId,
-        secretHash: req.body.appSecret,
-        credentials: req.body.cred
-    };
+    async.waterfall([
+            function (callback) {
+                var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret, credentials: req.body.cred };
 
-    models.ClientAppModel.findOne({appId: appAuthInfo.appId}, function findAppCallback(err, clientApp) {
-        if (err) return next(new errors.AuthError(400, err.message));
+                models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
+                    if (err) return callback(new errors.AuthError(400, err.message));
 
-        if (!clientApp) return next(new errors.AuthError(401, "Invalid appId."));
+                    if (!clientApp) return callback(new errors.AuthError(401, "Invalid appId."));
 
-        checkSecret(appAuthInfo, clientApp, function createSession(err) {
-            if (err) return next(err);
+                    callback(null, clientApp, appAuthInfo);
+                });
+            },
+            function (clientApp, appAuthInfo, callback) {
+                checkSecret(appAuthInfo, clientApp, function createSession(err) {
+                    if (err) return callback(err);
 
-            var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
+                    var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
 
-            var appSession = new models.AppSessionModel({
-                appId: clientApp.appId,
-                token: accessToken,
-                expired: config.appSession.expires
-            });
+                    var appSession = new models.AppSessionModel({
+                        appId: clientApp.appId,
+                        token: accessToken,
+                        expired: config.appSession.expires
+                    });
 
-            appSession.save(function saveCallback(err) {
-                if (err) return next(err);
+                    callback(null, appSession, clientApp);
+                });
+            },
+            function (appSession, clientApp, callback) {
+                appSession.save(function saveCallback(err) {
+                    if (err) return callback(err);
 
-                logger.debug("Session for app " + clientApp.appId + " saved successfully");
+                    logger.debug("Session for app " + clientApp.appId + " saved successfully");
 
-                models.UserSessionModel.find({appId: clientApp.appId}, function (err, sessions) {
-                    if (err) return next(err);
+                    callback(null, clientApp, appSession);
+                });
+            },
+            function (clientApp, appSession, callback) {
+                models.UserSessionModel.find({ appId: clientApp.appId }, function (err, sessions) {
+                    if (err) return callback(err);
 
                     res.send({
                         token: appSession.token,
@@ -60,9 +72,12 @@ function appAuth(req, res, next) {
                         sessions: sessions
                     });
                 });
-            });
-        });
-    });
+            }
+        ],
+        function (err, result) {
+            next(err);
+        }
+    );
 }
 
 function userAuth(req, res, next) {

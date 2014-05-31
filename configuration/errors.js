@@ -5,17 +5,20 @@
 // #region dependents
 
 var logger = require('log').getLogger(module);
+var errorHandler = require('errorhandler');
 
 // todo: configure error handler for different env;
-var errorHandler = require('express-error').express3({contextLinesCount: 3, handleUncaughtException: true});
+//var errorHandler = require('express-error').express3({contextLinesCount: 3, handleUncaughtException: true});
 
 // #region initialization
 
 function init(app) {
+    app.use(errorHandler());
+
     app.use(notFoundError);
 
     // todo: extract 'development' type to config env type;
-    //app.configure('development', function () {
+    //app.configure('development', function () { // obsoleted method
     app.use(internalError);
     //});
 }

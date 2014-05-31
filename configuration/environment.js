@@ -5,7 +5,11 @@
 // #region dependents
 
 var path = require('path');
-var express = require('express');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
+var logger = require('morgan');
+var expressValidator = require('express-validator');
+var methodOverride = require('method-override');
 var config = require('config');
 
 // #region initialization
@@ -15,13 +19,12 @@ function init(app) {
     app.set('view engine', 'jade');
 
 // #region default express middleware
-
-    app.use(express.favicon());
-    app.use(express.logger('dev'));
-    app.use(express.json());
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());      // '_method' property in body (POST -> DELETE / PUT)
-    app.use(express.cookieParser('your secret here'));
+    app.use(logger('dev'));
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded());
+    app.use(expressValidator());
+    app.use(methodOverride());
+    app.use(cookieParser());
 }
 
 // #region private methods
