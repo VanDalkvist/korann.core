@@ -27,125 +27,144 @@ function init(app) {
 
 function appAuth(req, res, next) {
     async.waterfall([
-            function (callback) {
-                var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret, credentials: req.body.cred };
+        function (callback) {
+            var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret, credentials: req.body.cred };
 
-                models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
-                    if (err) return callback(new errors.AuthError(400, err.message));
+            models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
+                if (err) return callback(new errors.AuthError(400, err.message));
 
-                    if (!clientApp) return callback(new errors.AuthError(401, "Invalid appId."));
+                if (!clientApp) return callback(new errors.AuthError(401, "Invalid appId."));
 
-                    callback(null, clientApp, appAuthInfo);
+                callback(null, clientApp, appAuthInfo);
+            });
+        },
+        function (clientApp, appAuthInfo, callback) {
+            checkSecret(appAuthInfo, clientApp, function createSession(err) {
+                if (err) return callback(err);
+
+                var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
+
+                var appSession = new models.AppSessionModel({
+                    appId: clientApp.appId,
+                    token: accessToken,
+                    expired: config.appSession.expires
                 });
-            },
-            function (clientApp, appAuthInfo, callback) {
-                checkSecret(appAuthInfo, clientApp, function createSession(err) {
-                    if (err) return callback(err);
 
-                    var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
+                callback(null, appSession, clientApp);
+            });
+        },
+        function (appSession, clientApp, callback) {
+            appSession.save(function saveCallback(err) {
+                if (err) return callback(err);
 
-                    var appSession = new models.AppSessionModel({
-                        appId: clientApp.appId,
-                        token: accessToken,
-                        expired: config.appSession.expires
-                    });
+                logger.debug("Session for app " + clientApp.appId + " saved successfully");
 
-                    callback(null, appSession, clientApp);
-                });
-            },
-            function (appSession, clientApp, callback) {
-                appSession.save(function saveCallback(err) {
-                    if (err) return callback(err);
+                callback(null, clientApp, appSession);
+            });
+        },
+        function (clientApp, appSession, callback) {
+            models.UserSessionModel.find({ appId: clientApp.appId }, function (err, sessions) {
+                if (err) return callback(err);
 
-                    logger.debug("Session for app " + clientApp.appId + " saved successfully");
-
-                    callback(null, clientApp, appSession);
-                });
-            },
-            function (clientApp, appSession, callback) {
-                models.UserSessionModel.find({ appId: clientApp.appId }, function (err, sessions) {
-                    if (err) return callback(err);
-
-                    res.send({
-                        token: appSession.token,
-                        expired: appSession.expires,
-                        sessions: sessions
-                    });
-                });
-            }
-        ],
-        function (err, result) {
-            next(err);
+                callback(null, appSession, sessions);
+            });
+        },
+        function (appSession, sessions, callback) {
+            res.send({ token: appSession.token, expired: appSession.expires, sessions: sessions });
         }
-    );
+        
+    ], function (err, result) {
+        next(err);
+    });
 }
 
 function userAuth(req, res, next) {
-    var appId = req.body.appId;
-    verifyAppAccess(req, res, function verifyCallback(err, credentials) {
-        if (err) return next(err);
+    async.waterfall([
+        function (callback) {
+            verifyAppAccess(req, res, function verifyCallback(err, credentials) {
+                if (err) return callback(err);
 
-        if (!credentials)
-            return next(new Error("Invalid credentials."));
+                if (!credentials) return callback(new Error("Invalid credentials."));
 
-        models.UserModel.findOne({name: credentials.username}, function findUser(err, user) {
-            if (err) return next(err);
+                callback(null, credentials);
+            });
+        },
+        function (credentials, callback) {
+            models.UserModel.findOne({name: credentials.username}, function findUser(err, user) {
+                if (err) return callback(err);
 
-            if (!user) return next(new errors.AuthError(404, "User not found"));
+                if (!user) return callback(new errors.AuthError(404, "User not found"));
 
-            if (!user.checkPassword(credentials.password))
-                next(new Error("Invalid password"));
+                if (!user.checkPassword(credentials.password)) callback(new errors.AuthError(403, "Invalid password"));
 
+                callback(null, user);
+            });
+        },
+        function saveUser(user, callback) {
             var userSession = new models.UserSessionModel({
                 userId: user._id,
-                appId: appId,
+                appId: req.body.appId,
                 expired: config.userSession.expires,
                 context: { username: user.name, roles: user.roles }
             });
 
             userSession.save(function saveCallback(err) {
-                if (err) return next(err);
+                if (err) return callback(err);
 
                 logger.debug("Session for user '" + user.name + "' saved successfully");
 
-                res.send({
-                    sessionId: userSession._id,
-                    name: userSession.context.username,
-                    roles: userSession.context.roles,
-                    expired: userSession.expired
-                });
+                callback(null, userSession);
             });
-        });
+        },
+        function (userSession, callback) {
+            res.send({
+                sessionId: userSession._id,
+                name: userSession.context.username,
+                roles: userSession.context.roles,
+                expired: userSession.expired
+            });
+        }
+    ], function (err, result) {
+        next(err);
     });
 }
 
 function userLogout(req, res, next) {
-    verifyAppAccess(req, res, function verifyCallback(err, credentials) {
-        if (err) return next(err);
+    async.waterfall([
+        function (callback) {
+            verifyAppAccess(req, res, function verifyCallback(err, credentials) {
+                if (err) return callback(err);
 
-        if (!credentials)
-            return next(new Error("Invalid credentials."));
+                if (!credentials) return callback(new Error("Invalid credentials."));
 
-        models.UserSessionModel.findOne({_id: credentials.sessionId}, function findSession(err, session) {
-            if (err)
-                return next(err);
+                callback(null, credentials);
+            });
+        },
+        function (credentials, callback) {
+            models.UserSessionModel.findOne({ _id: credentials.sessionId }, function findSession(err, session) {
+                if (err) return callback(err);
 
-            if (!session)
-                return next(new errors.AuthError(401, "Session not found"));
+                if (!session) return callback(new errors.AuthError(401, "Session not found"));
 
-            if (session.token !== credentials.token)
-                return next(new errors.AuthError(401, "Invalid session token"));
+                if (session.token !== credentials.token) return callback(new errors.AuthError(401, "Invalid session token"));
 
+                callback(null, session, credentials);
+            });
+        },
+        function (session, credentials, callback) {
             session.remove(function saveCallback(err) {
-                if (err) return next(err);
+                if (err) return callback(err);
 
                 logger.debug("Session for user '" + credentials.username + "' removed successfully");
 
-                res.send(200, {
-                    sessionId: session._id
-                });
+                callback(null, session);
             });
-        });
+        },
+        function (session) {
+            res.send(200, { sessionId: session._id });
+        }
+    ], function (err) {
+        next(err);
     });
 }
 
