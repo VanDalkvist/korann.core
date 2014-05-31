@@ -15,6 +15,8 @@ function init(settings, onConnectionEstablish) {
 
     dbConnection.on('error', connectionError);
 
+    // todo: wrong async connection to db; should be not async or callback method provide;
+
     dbConnection.once('open', function connectionEstablished() {
         logger.debug("Connection to db '" + dbConnection.name + "' established.");
 
