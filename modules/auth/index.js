@@ -18,7 +18,7 @@ function init(app) {
     app.post('/user/login', userAuth);
     app.post('/user/logout', userLogout);
 
-    app.all('/api/*', verifyAppAccess);
+    app.all('/api/*', verifyAppAccess, verifyUserAccess);
 
     logger.debug("Initialization of authentication finished successfully.");
 }
@@ -28,7 +28,7 @@ function init(app) {
 function appAuth(req, res, next) {
     async.waterfall([
         function (callback) {
-            var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret, credentials: req.body.cred };
+            var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret };
 
             models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
                 if (err) return callback(new errors.AuthError(400, err.message));
@@ -72,7 +72,7 @@ function appAuth(req, res, next) {
         function (appSession, sessions, callback) {
             res.send({ token: appSession.token, expired: appSession.expires, sessions: sessions });
         }
-        
+
     ], function (err, result) {
         next(err);
     });
@@ -81,8 +81,10 @@ function appAuth(req, res, next) {
 function userAuth(req, res, next) {
     async.waterfall([
         function (callback) {
-            verifyAppAccess(req, res, function verifyCallback(err, credentials) {
+            verifyAppAccess(req, res, function verifyCallback(err) {
                 if (err) return callback(err);
+
+                var credentials = req.body.cred;
 
                 if (!credentials) return callback(new Error("Invalid credentials."));
 
@@ -103,7 +105,7 @@ function userAuth(req, res, next) {
         function saveUser(user, callback) {
             var userSession = new models.UserSessionModel({
                 userId: user._id,
-                appId: req.body.appId,
+                appId: req.headers.appid,
                 expired: config.userSession.expires,
                 context: { username: user.name, roles: user.roles }
             });
@@ -132,8 +134,10 @@ function userAuth(req, res, next) {
 function userLogout(req, res, next) {
     async.waterfall([
         function (callback) {
-            verifyAppAccess(req, res, function verifyCallback(err, credentials) {
+            verifyAppAccess(req, res, function verifyCallback(err) {
                 if (err) return callback(err);
+
+                var credentials = req.body.cred;
 
                 if (!credentials) return callback(new Error("Invalid credentials."));
 
@@ -182,20 +186,38 @@ function calculateHash(secret) {
 
 function verifyAppAccess(req, res, next) {
     var appInfo = {
-        appId: req.body.appId,
-        accessToken: req.body.token,
-        credentials: req.body.cred
+        appId: req.headers.appid,
+        accessToken: req.headers.token
     };
 
     if (!appInfo.appId || !appInfo.accessToken) return next(new errors.AuthError(401, "Invalid appId"));
 
-    models.AppSessionModel.findOne({appId: appInfo.appId}, function findSession(err, appSession) {
+    models.AppSessionModel.findOne({ appId: appInfo.appId }, function findSession(err, appSession) {
         if (err) return next(err);
 
         if (appSession.token !== appInfo.accessToken)
             return next(new errors.AuthError(401, "Invalid access token."));
 
         next(null, appInfo.credentials);
+    });
+}
+
+function verifyUserAccess(req, res, next) {
+    var userSessionInfo = {
+        sessionId: req.headers.session,
+        sessionToken: req.headers.sessionToken
+    };
+
+    if (!userSessionInfo.sessionId) return next(new errors.AuthError(401, "Invalid user session"));
+
+    models.UserSessionModel.findOne({ _id: userSessionInfo.sessionId }, function findSession(err, session) {
+        if (err) return next(err);
+
+        if (!session) return next(new errors.AuthError(401, "Session not found"));
+
+        if (session.token !== userSessionInfo.sessionToken) return next(new errors.AuthError(401, "Invalid session token"));
+
+        next(null, session, userSessionInfo);
     });
 }
 

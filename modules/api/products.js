@@ -15,7 +15,7 @@ function init(app, models) {
         return ProductModel.find({}, function (err, products) {
             if (err) return internalError(err, res);
 
-            return products;
+            return success(res, products);
         });
     });
 
@@ -23,7 +23,7 @@ function init(app, models) {
         return ProductModel.findById(req.params.id, function (err, product) {
             if (err) return internalError(err, res);
 
-            return product;
+            return success(res, product);
         });
     });
 
@@ -68,15 +68,16 @@ function init(app, models) {
                     if (err.name == 'ValidationError') return validationError(res);
 
                     return internalError(err, res);
-                } else {
-                    logger.info("product updated");
-                    return success(res, product);
                 }
+
+                logger.info("product updated");
+                return success(res, product);
             });
         });
     });
 
     app.delete('/api/products/:id', function (req, res) {
+        // todo: add async waterfall
         return ProductModel.findById(req.params.id, function (err, product) {
             if (err) return internalError(err, res);
 
