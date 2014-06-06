@@ -11,30 +11,38 @@ var logger = require('log').getLogger(module);
 function init(app, models) {
     var ProductModel = models.ProductModel;
 
-    app.get('/api/products', function (req, res) {
-        return ProductModel.find({}, function (err, products) {
+    app.get('/api/products', getAll);
+    app.get('/api/products/:id', getById);
+    app.post('/api/products', create);
+    app.put('/api/products/:id', update);
+    app.delete('/api/products/:id', remove);
+
+    function getAll(req, res) {
+        return ProductModel.find({ }, function (err, products) {
             if (err) return internalError(err, res);
 
             return success(res, products);
         });
-    });
+    }
 
-    app.get('/api/products/:id', function (req, res) {
+    function getById(req, res) {
         return ProductModel.findById(req.params.id, function (err, product) {
             if (err) return internalError(err, res);
 
             return success(res, product);
         });
-    });
+    }
 
-    app.post('/api/products', function (req, res) {
+    function create(req, res) {
         // todo: add validation and delete default value
+        var newProduct = req.body;
+
         var product = new ProductModel({
-            title: req.body.title,
-            category: req.body.category || "category",
-            description: req.body.description || "desc",
+            title: newProduct.title,
+            category: newProduct.category || "category",
+            description: newProduct.description || "desc",
             source: "kora",
-            images: req.body.images
+            images: newProduct.images
         });
 
         product.save(function productSaveCallback(err, product) {
@@ -49,9 +57,9 @@ function init(app, models) {
 
             return internalError(err, res);
         });
-    });
+    }
 
-    app.put('/api/products/:id', function (req, res) {
+    function update(req, res) {
         return ProductModel.findById(req.params.id, function (err, product) {
             if (!product) return notFound(res);
 
@@ -74,9 +82,9 @@ function init(app, models) {
                 return success(res, product);
             });
         });
-    });
+    }
 
-    app.delete('/api/products/:id', function (req, res) {
+    function remove(req, res) {
         // todo: add async waterfall
         return ProductModel.findById(req.params.id, function (err, product) {
             if (err) return internalError(err, res);
@@ -90,7 +98,7 @@ function init(app, models) {
                 return success(res);
             });
         });
-    });
+    }
 }
 
 // #region private methods
