@@ -97,7 +97,7 @@ function userAuth(req, res, next) {
 
                 if (!user) return callback(new errors.AuthError(404, "User not found"));
 
-                if (!user.checkPassword(credentials.password)) callback(new errors.AuthError(403, "Invalid password"));
+                if (!user.checkPassword(credentials.password)) return callback(new errors.AuthError(403, "Invalid password"));
 
                 callback(null, user);
             });
@@ -125,6 +125,7 @@ function userAuth(req, res, next) {
                 roles: userSession.context.roles,
                 expired: userSession.expired
             });
+            callback(null);
         }
     ], function (err, result) {
         next(err);
