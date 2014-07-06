@@ -125,7 +125,6 @@ function userAuth(req, res, next) {
                 roles: userSession.context.roles,
                 expired: userSession.expired
             });
-            callback(null);
         }
     ], function (err, result) {
         next(err);
@@ -160,7 +159,7 @@ function userLogout(req, res, next) {
             session.remove(function saveCallback(err) {
                 if (err) return callback(err);
 
-                logger.debug("Session for user '" + credentials.username + "' removed successfully");
+                logger.debug("Session for user '" + credentials.name + "' removed successfully");
 
                 callback(null, session);
             });

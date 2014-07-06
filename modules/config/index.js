@@ -1,6 +1,6 @@
 var path = require('path');
 var nconf = require('nconf');
-var _ = require('underscore');
+var _ = require('lodash');
 
 nconf.argv()
     .env()
