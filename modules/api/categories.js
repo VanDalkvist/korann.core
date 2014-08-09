@@ -8,7 +8,10 @@
 
 function init(app, db) {
     app.get('/api/categories', function (req, res) {
-        res.send({response: "GET /api/categories"}); // not implemented
+        // not implemented
+        res.send([
+            'category1', 'category2', 'category3', 'category4', 'category5', 'category6', 'category7', 'category8', 'category9',
+        ]);
     });
 
     app.post('/api/categories', function (req, res) {
