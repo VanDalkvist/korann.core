@@ -18,9 +18,10 @@ function init(app) {
 // #region private functions
 
 function notFoundError(req, res) {
-    res.status(404);
+    var code = 404;
+    // todo: fix two errors occurring;
     logger.debug('Not found URL: %s', req.url);
-    res.send(code, { error: { code: 404, message: "Not found" }});
+    res.send(code, { error: { code: code, message: "Not found" }});
     res.render('404');
 }
 
