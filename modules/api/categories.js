@@ -32,14 +32,13 @@ function init(app, models) {
     }
 
     function create(req, res) {
-        // todo: add validation and delete default value
         var newCategory = req.body;
 
         var category = new CategoryModel({
-            title: newCategory.title,
-            category: newCategory.category || "category",
-            description: newCategory.description || "desc",
-            source: "kora",
+            name: newCategory.name,
+            tags: newCategory.tags,
+            description: newCategory.description,
+            brand: newCategory.brand,
             images: newCategory.images
         });
 
@@ -58,27 +57,18 @@ function init(app, models) {
     }
 
     function update(req, res) {
-        return CategoryModel.findById(req.params.id, function (err, category) {
+        return CategoryModel.findByIdAndUpdate(req.params.id, req.body, function (err, category) {
+            // todo: untested
+            if (err) {
+                if (err.name == 'ValidationError') return validationError(res);
+
+                return internalError(err, res);
+            }
+
             if (!category) return notFound(res);
 
-            // todo: use mapper
-
-            category.name = req.body.name;
-            category.description = req.body.description;
-            category.category = req.body.category;
-            category.images = req.body.images;
-            category.brand = req.body.brand;
-
-            return category.save(function saveCallback(err) {
-                if (err) {
-                    if (err.name == 'ValidationError') return validationError(res);
-
-                    return internalError(err, res);
-                }
-
-                logger.info("category updated");
-                return success(res, category);
-            });
+            logger.info("category updated");
+            return success(res, category);
         });
     }
 
@@ -121,6 +111,7 @@ function validationError(err, res) {
     logger.error('Validation error(%d): %s', res.statusCode, 'Validation error' + err.message);
     return res.send({ error: { status: res.statusCode, message: 'Validation error: ' + err.message } });
 }
+
 // #region exports
 
 exports.init = init;
