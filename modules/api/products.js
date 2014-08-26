@@ -46,57 +46,44 @@ function init(app, models) {
         });
 
         product.save(function productSaveCallback(err, product) {
-            if (!err) {
-                logger.info("Product created: " + product);
-                return success(res, product);
+            if (err) {
+                if (err.name == 'ValidationError') {
+                    return validationError(err, res);
+                }
+
+                return internalError(err, res);
             }
 
-            if (err.name == 'ValidationError') {
-                return validationError(err, res);
-            }
-
-            return internalError(err, res);
+            logger.info("Product created: " + product);
+            return success(res, product);
         });
     }
 
     function update(req, res) {
-        return ProductModel.findById(req.params.id, function (err, product) {
+        delete req.body._id; // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
+        var options = { new: true }; // for return new document
+        return ProductModel.findByIdAndUpdate(req.params.id, req.body, options, function (err, product) {
+            if (err) {
+                if (err.name == 'ValidationError') return validationError(res);
+
+                return internalError(err, res);
+            }
+
             if (!product) return notFound(res);
 
-            // todo: use mapper
-
-            product.name = req.body.name;
-            product.description = req.body.description;
-            product.category = req.body.category;
-            product.images = req.body.images;
-            product.brand = req.body.brand;
-
-            return product.save(function saveCallback(err) {
-                if (err) {
-                    if (err.name == 'ValidationError') return validationError(res);
-
-                    return internalError(err, res);
-                }
-
-                logger.info("product updated");
-                return success(res, product);
-            });
+            logger.info("product updated");
+            return success(res, product);
         });
     }
 
     function remove(req, res) {
-        // todo: add async waterfall
-        return ProductModel.findById(req.params.id, function (err, product) {
+        return ProductModel.findByIdAndRemove(req.params.id, { }, function (err, product) {
             if (err) return internalError(err, res);
 
             if (!product) return notFound(res);
 
-            return product.remove(function (err) {
-                if (err) return internalError(err, res);
-
-                logger.info("product removed");
-                return success(res);
-            });
+            logger.info("product removed");
+            return success(res);
         });
     }
 }
