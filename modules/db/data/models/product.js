@@ -19,6 +19,7 @@ function initModel() {
         category: { type: String, required: true },
         description: { type: String, required: true },
         brand: { type: String, required: true },
+        volume: { type: Number, required: true },
         images: [ ImageSchema ]
     });
 
@@ -34,7 +35,7 @@ function initModel() {
 // #region private methods
 
 function nameValidate(value) {
-    return value.length > 5 && value.length < 70;
+    return value && value.length > 5 && value.length < 70;
 }
 
 // #region exports

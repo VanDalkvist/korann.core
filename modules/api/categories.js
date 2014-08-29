@@ -4,6 +4,8 @@
 
 // #region dependents
 
+var logger = require('log').getLogger(module);
+
 // #region initialization
 
 function init(app, models) {
@@ -57,6 +59,8 @@ function init(app, models) {
     }
 
     function update(req, res) {
+        delete req.body._id; // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
+        var options = { new: true }; // for return new document
         return CategoryModel.findByIdAndUpdate(req.params.id, req.body, function (err, category) {
             // todo: untested
             if (err) {
@@ -73,7 +77,7 @@ function init(app, models) {
     }
 
     function remove(req, res) {
-        return CategoryModel.findAndRemove(req.params.id, function (err, category) {
+        return CategoryModel.findOneAndRemove({ _id: req.params.id }, { }, function (err, category) {
             if (err) return internalError(err, res);
 
             if (!category) return notFound(res);

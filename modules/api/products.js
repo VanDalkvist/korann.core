@@ -34,16 +34,7 @@ function init(app, models) {
     }
 
     function create(req, res) {
-        // todo: add validation and delete default value
-        var newProduct = req.body;
-
-        var product = new ProductModel({
-            title: newProduct.title,
-            category: newProduct.category || "category",
-            description: newProduct.description || "desc",
-            source: "kora",
-            images: newProduct.images
-        });
+        var product = new ProductModel(req.body);
 
         product.save(function productSaveCallback(err, product) {
             if (err) {
