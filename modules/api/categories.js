@@ -61,8 +61,7 @@ function init(app, models) {
     function update(req, res) {
         delete req.body._id; // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
         var options = { new: true }; // for return new document
-        return CategoryModel.findByIdAndUpdate(req.params.id, req.body, function (err, category) {
-            // todo: untested
+        return CategoryModel.findOneAndUpdate(req.params.id, req.body, options, function (err, category) {
             if (err) {
                 if (err.name == 'ValidationError') return validationError(res);
 
