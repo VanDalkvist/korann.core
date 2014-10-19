@@ -2,33 +2,31 @@
  *  Errors
  */
 
-// #region dependents
+// #region dependencies
 
 var logger = require('log').getLogger(module);
+var errors = require('errors/http');
 
 // #region initialization
 
 function init(app) {
-    app.use(notFoundError);
-
-    // todo: extract 'development' type to config env type;
+    app.use(httpError);
     app.use(internalError);
 }
 
 // #region private functions
 
-function notFoundError(req, res) {
-    var code = 404;
-    // todo: fix two errors occurring;
-    logger.debug('Not found URL: %s', req.url);
-    res.send(code, { error: { code: code, message: "Not found" }});
-    res.render('404');
+function httpError(err, req, res, next) {
+    if (err.name !== 'HttpError') return next(err);
+
+    logger.error('Http error: %s', req.url);
+    res.status(err.code).send({ error: { code: err.code, message: err.message }});
 }
 
 function internalError(err, req, res, next) {
     var code = err.code || 500;
-    res.send(code, { error: { code: code, message: err.message }});
-    logger.error('Error: { code: %d, message: %s, stack: %s }', code, err.error || err.message, err.stack);
+    res.status(err.code).send({ error: { code: code, message: err.message }});
+    logger.error('Internal Error: { code: %d, message: %s, stack: %s }', code, err.error || err.message, err.stack);
 }
 
 // #region exports

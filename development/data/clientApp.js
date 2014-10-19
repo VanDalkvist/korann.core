@@ -9,18 +9,15 @@ var models = require('db/app');
 var crypto = require('utils/crypto');
 var date = require('utils/date');
 var uuid = require('node-uuid');
-var config = require('../config');
 
 // #region initialization
 
 function init() {
-    require('db').init(config, function () {
-        logger.debug("hello");
+    logger.debug("hello");
 
-        createClientApp('client');
-        createClientApp('admin');
-        createClientApp('manager');
-    });
+    createClientApp('client');
+    createClientApp('admin');
+    createClientApp('manager');
 }
 
 // #region private methods

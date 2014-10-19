@@ -5,7 +5,7 @@
 // #region dependents
 
 var models = require('db/app');
-var errors = require('errors/auth');
+var errors = require('errors/http');
 var crypto = require('utils/crypto');
 var logger = require('log').getLogger(module);
 var config = require('config');
@@ -31,9 +31,9 @@ function appAuth(req, res, next) {
             var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret };
 
             models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
-                if (err) return callback(new errors.AuthError(400, err.message));
+                if (err) return callback(new errors.HttpError(400, err.message));
 
-                if (!clientApp) return callback(new errors.AuthError(401, "Invalid appId."));
+                if (!clientApp) return callback(new errors.HttpError(401, "Invalid appId."));
 
                 callback(null, clientApp, appAuthInfo);
             });
@@ -95,9 +95,9 @@ function userAuth(req, res, next) {
             models.UserModel.findOne({name: credentials.username}, function findUser(err, user) {
                 if (err) return callback(err);
 
-                if (!user) return callback(new errors.AuthError(404, "User not found"));
+                if (!user) return callback(new errors.HttpError(404, "User not found"));
 
-                if (!user.checkPassword(credentials.password)) return callback(new errors.AuthError(403, "Invalid password"));
+                if (!user.checkPassword(credentials.password)) return callback(new errors.HttpError(403, "Invalid password"));
 
                 callback(null, user);
             });
@@ -148,9 +148,9 @@ function userLogout(req, res, next) {
             models.UserSessionModel.findOne({ _id: credentials.sessionId }, function findSession(err, session) {
                 if (err) return callback(err);
 
-                if (!session) return callback(new errors.AuthError(401, "Session not found"));
+                if (!session) return callback(new errors.HttpError(401, "Session not found"));
 
-                if (session.token !== credentials.token) return callback(new errors.AuthError(401, "Invalid session token"));
+                if (session.token !== credentials.token) return callback(new errors.HttpError(401, "Invalid session token"));
 
                 callback(null, session, credentials);
             });
@@ -175,7 +175,7 @@ function userLogout(req, res, next) {
 function checkSecret(authInfo, clientApp, next) {
     var secretHash = calculateHash(clientApp.secret);
     if (secretHash !== authInfo.secretHash)
-        return next(new errors.AuthError(400, "Invalid authentication data: secret"));
+        return next(new errors.HttpError(400, "Invalid authentication data: secret"));
 
     next(null, clientApp);
 }
@@ -190,13 +190,13 @@ function verifyAppAccess(req, res, next) {
         accessToken: req.headers.token
     };
 
-    if (!appInfo.appId || !appInfo.accessToken) return next(new errors.AuthError(401, "Invalid appId"));
+    if (!appInfo.appId || !appInfo.accessToken) return next(new errors.HttpError(401, "Invalid appId"));
 
     models.AppSessionModel.findOne({ appId: appInfo.appId }, function findSession(err, appSession) {
         if (err) return next(err);
 
         if (appSession.token !== appInfo.accessToken)
-            return next(new errors.AuthError(401, "Invalid access token."));
+            return next(new errors.HttpError(401, "Invalid access token."));
 
         next(null, appInfo.credentials);
     });
@@ -208,14 +208,14 @@ function verifyUserAccess(req, res, next) {
         sessionToken: req.headers.sessionToken
     };
 
-    if (!userSessionInfo.sessionId) return next(new errors.AuthError(401, "Invalid user session"));
+    if (!userSessionInfo.sessionId) return next(new errors.HttpError(401, "Invalid user session"));
 
     models.UserSessionModel.findOne({ _id: userSessionInfo.sessionId }, function findSession(err, session) {
         if (err) return next(err);
 
-        if (!session) return next(new errors.AuthError(401, "Session not found"));
+        if (!session) return next(new errors.HttpError(401, "Session not found"));
 
-        if (session.token !== userSessionInfo.sessionToken) return next(new errors.AuthError(401, "Invalid session token"));
+        if (session.token !== userSessionInfo.sessionToken) return next(new errors.HttpError(401, "Invalid session token"));
 
         next(null, session, userSessionInfo);
     });

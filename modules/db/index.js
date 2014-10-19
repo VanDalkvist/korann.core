@@ -10,8 +10,9 @@ var logger = require('log').getLogger(module);
 // #region initialization
 
 function init(settings, onConnectionEstablish) {
-    var dbConnection = mongoose.createConnection(settings.db.connectionString);
-//
+    mongoose.connect(settings.db.connectionString);
+    var dbConnection = mongoose.connection;
+
     dbConnection.on('error', connectionError);
 
     // todo: wrong async connection to db; should be not async or callback method provide;

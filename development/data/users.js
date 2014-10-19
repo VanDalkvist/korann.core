@@ -11,15 +11,13 @@ var config = require('../config');
 // #region initialization
 
 function test(user) {
-    require('../../modules/db').init(config, function () {
-        dropUsers(user, function () {
-            createUser(user, function (err) {
-                if (err) logger.error("Test failed.", err);
+    dropUsers(user, function () {
+        createUser(user, function (err) {
+            if (err) {
+                return logger.error("Test failed. Error is: ", err);
+            }
 
-                logger.debug("Test passed.");
-
-                process.exit(0)
-            });
+            logger.debug("Test passed.");
         });
     });
 }
@@ -27,10 +25,10 @@ function test(user) {
 // #region private methods
 
 function dropUsers(user, callback) {
-    models.UserModel.remove({ name: user.name }, function (err) {
+    models.UserModel.findOneAndRemove({ name: user.name }, {}, function (err) {
         if (err) throw err;
 
-        logger.debug("User '", user.name, "' was deleted.");
+        logger.info("User '", user.name, "' was deleted.");
         callback();
     });
 }
