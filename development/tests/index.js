@@ -9,7 +9,6 @@ var appTests = require('../data/clientApp');
 var config = require('../config');
 var logger = require('../../modules/log').getLogger(module);
 
-
 // #region initialization
 
 function init() {
@@ -21,8 +20,18 @@ function init() {
             password: 'admin',
             roles: ['client', 'admin', 'manager']
         };
-        userTests.run(user);
-//        appTests.run();
+//        userTests.run(user);
+        appTests.run(function (err) {
+            if (err) {
+                logger.error("Test failed.");
+            } else {
+                logger.info("Test passed.");
+            }
+
+            setTimeout(function () {
+                process.exit();
+            }, 200)
+        });
     });
 }
 

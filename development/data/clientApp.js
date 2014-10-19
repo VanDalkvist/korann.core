@@ -9,30 +9,54 @@ var models = require('db/app');
 var crypto = require('utils/crypto');
 var date = require('utils/date');
 var uuid = require('node-uuid');
+var async = require('async');
+
 
 // #region initialization
 
-function init() {
-    logger.debug("hello");
+function _init(endCallback) {
+    logger.debug("client apps testing");
 
-    createClientApp('client');
-    createClientApp('admin');
-    createClientApp('manager');
+    async.parallel([
+            function (callback) {
+                _createClientApp('client', callback);
+            },
+            function (callback) {
+                _createClientApp('admin', callback);
+            },
+            function (callback) {
+                _createClientApp('manager', callback);
+            }
+        ],
+        function (err, results) {
+            if (err) {
+                endCallback && endCallback(err);
+                return;
+            }
+            endCallback && endCallback();
+        }
+    );
 }
 
 // #region private methods
 
-function createClientApp(role) {
+function _createClientApp(role, callback) {
     var clientApp = new models.ClientAppModel({
         appId: uuid.v1(),
         name: "test" + date.timestamp(),
         secret: crypto.randomString(64),
-        permissions: getRoles(role)
+        permissions: _getRoles(role)
     });
-    saveClientApp(clientApp);
+    clientApp.save(function (err, clientApp, affected) {
+        if (err) {
+            logger.error(err, clientApp, affected);
+            callback && callback(err);
+        }
+        callback && callback(null, clientApp);
+    });
 }
 
-function getRoles(type) {
+function _getRoles(type) {
     switch (type) {
         case 'client':
             return ['client'];
@@ -47,14 +71,6 @@ function getRoles(type) {
     throw new Error("Wrong type");
 }
 
-function saveClientApp(clientApp) {
-    clientApp.save(function (err, clientApp, affected) {
-        if (err) throw err;
-
-        logger.debug(err, clientApp, affected);
-    });
-}
-
 // #region exports
 
-exports.run = init;
+exports.run = _init;
