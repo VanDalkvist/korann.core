@@ -5,7 +5,7 @@
 // #region dependencies
 
 var logger = require('log').getLogger(module);
-var errors = require('errors/http');
+var errors = require('errors');
 
 // #region initialization
 

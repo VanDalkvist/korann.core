@@ -5,7 +5,7 @@
 // #region dependents
 
 var models = require('db/app');
-var errors = require('errors/http');
+var errors = require('errors');
 var crypto = require('utils/crypto');
 var logger = require('log').getLogger(module);
 var config = require('config');
@@ -86,7 +86,7 @@ function userAuth(req, res, next) {
 
                 var credentials = req.body.cred;
 
-                if (!credentials) return callback(new Error("Invalid credentials."));
+                if (!credentials) return callback(new errors.HttpError(400, "Invalid credentials."));
 
                 callback(null, credentials);
             });
@@ -95,9 +95,9 @@ function userAuth(req, res, next) {
             models.UserModel.findOne({name: credentials.username}, function findUser(err, user) {
                 if (err) return callback(err);
 
-                if (!user) return callback(new errors.HttpError(404, "User not found"));
+                if (!user) return callback(new errors.NotFoundError());
 
-                if (!user.checkPassword(credentials.password)) return callback(new errors.HttpError(403, "Invalid password"));
+                if (!user.checkPassword(credentials.password)) return callback(new errors.HttpError(401, "Invalid password."));
 
                 callback(null, user);
             });
@@ -139,7 +139,7 @@ function userLogout(req, res, next) {
 
                 var credentials = req.body.cred;
 
-                if (!credentials) return callback(new Error("Invalid credentials."));
+                if (!credentials) return callback(new errors.HttpError(401, "Invalid credentials."));
 
                 callback(null, credentials);
             });
@@ -208,14 +208,14 @@ function verifyUserAccess(req, res, next) {
         sessionToken: req.headers.sessionToken
     };
 
-    if (!userSessionInfo.sessionId) return next(new errors.HttpError(401, "Invalid user session"));
+    if (!userSessionInfo.sessionId) return next(new errors.HttpError(401, "Invalid user session."));
 
     models.UserSessionModel.findOne({ _id: userSessionInfo.sessionId }, function findSession(err, session) {
-        if (err) return next(err);
+        if (err) return next(new errors.HttpError(500, err.message));
 
-        if (!session) return next(new errors.HttpError(401, "Session not found"));
+        if (!session) return next(new errors.HttpError(401, "Session not found."));
 
-        if (session.token !== userSessionInfo.sessionToken) return next(new errors.HttpError(401, "Invalid session token"));
+        if (session.token !== userSessionInfo.sessionToken) return next(new errors.HttpError(401, "Invalid session token."));
 
         next(null, session, userSessionInfo);
     });

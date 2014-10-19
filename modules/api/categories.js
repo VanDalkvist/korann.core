@@ -5,6 +5,7 @@
 // #region dependents
 
 var logger = require('log').getLogger(module);
+var errors = require('errors');
 
 // #region initialization
 
@@ -17,30 +18,28 @@ function init(app, models) {
     app.put('/api/categories/:id', update);
     app.delete('/api/categories/:id', remove);
 
-    function getAll(req, res) {
-        return CategoryModel.find({ }, function (err, products) {
-            if (err) return internalError(err, res);
+    function getAll(req, res, next) {
+        return CategoryModel.find({ }, function (err, categories) {
+            if (err) return next(new errors.HttpError(500, err.message));
 
-            return success(res, products);
+            return success(res, categories);
         });
     }
 
-    function getById(req, res) {
+    function getById(req, res, next) {
         return CategoryModel.findById(req.params.id, function (err, category) {
-            if (err) return internalError(err, res);
+            if (err) return next(new errors.HttpError(500, err.message));
 
             return success(res, category);
         });
     }
 
-    function create(req, res) {
+    function create(req, res, next) {
         var newCategory = req.body;
 
         var category = new CategoryModel({
             name: newCategory.name,
-            tags: newCategory.tags,
             description: newCategory.description,
-            brand: newCategory.brand,
             images: newCategory.images
         });
 
@@ -50,36 +49,38 @@ function init(app, models) {
                 return success(res, category);
             }
 
-            if (err.name == 'ValidationError') {
-                return validationError(err, res);
+            if (err.name === 'ValidationError') {
+                return next(new errors.HttpError(400, "Validation error: " + err.message));
             }
 
-            return internalError(err, res);
+            return next(new errors.HttpError(500, err.message));
         });
     }
 
-    function update(req, res) {
-        delete req.body._id; // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
-        var options = { new: true }; // for return new document
+    function update(req, res, next) {
+        delete req.body._id;            // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
+        var options = { new: true };    // for return new document
         return CategoryModel.findOneAndUpdate(req.params.id, req.body, options, function (err, category) {
             if (err) {
-                if (err.name == 'ValidationError') return validationError(res);
+                if (err.name == 'ValidationError') {
+                    return next(new errors.HttpError(400, "Validation error: " + err.message));
+                }
 
-                return internalError(err, res);
+                return next(new errors.HttpError(500, err.message));
             }
 
-            if (!category) return notFound(res);
+            if (!category) return next(new errors.NotFoundError());
 
             logger.info("category updated");
             return success(res, category);
         });
     }
 
-    function remove(req, res) {
+    function remove(req, res, next) {
         return CategoryModel.findOneAndRemove({ _id: req.params.id }, { }, function (err, category) {
-            if (err) return internalError(err, res);
+            if (err) return next(new errors.HttpError(500, err.message));
 
-            if (!category) return notFound(res);
+            if (!category) return next(new errors.NotFoundError());
 
             logger.info("category removed");
             return success(res);
@@ -89,30 +90,8 @@ function init(app, models) {
 
 // #region private methods
 
-// todo: move to custom errors
-// todo: repeated code
 function success(res, data) {
-    return res.send({ status: '200', data: data });
-}
-
-function internalError(err, res) {
-    var statusCode = 500;
-
-    res.statusCode = statusCode;
-    logger.error('Internal error(%d): %s', res.statusCode, err.message);
-    return res.send({ error: {status: statusCode, message: 'Server error'} });
-}
-
-function notFound(res) {
-    res.statusCode = 404;
-    logger.error('Not found error(%d): %s', res.statusCode, 'Not found');
-    return res.send({ error: { status: res.statusCode, message: 'Not found' } });
-}
-
-function validationError(err, res) {
-    res.statusCode = 400;
-    logger.error('Validation error(%d): %s', res.statusCode, 'Validation error' + err.message);
-    return res.send({ error: { status: res.statusCode, message: 'Validation error: ' + err.message } });
+    return res.status(200).send({ data: data });
 }
 
 // #region exports

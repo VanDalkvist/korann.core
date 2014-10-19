@@ -16,12 +16,7 @@ function initModel() {
 
     var CategorySchema = new Schema({
         name: { type: String, required: true },
-//        categories: [ CategorySchema ],
         images: [ ImageSchema ],
-        tags: [
-            { type: String, required: false }
-        ],
-        brand: { type: String, required: true },
         description: { type: String, required: false }
     });
 
