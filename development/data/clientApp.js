@@ -9,38 +9,23 @@ var models = require('db/app');
 var crypto = require('utils/crypto');
 var date = require('utils/date');
 var uuid = require('node-uuid');
-var async = require('async');
-
+var q = require('q');
 
 // #region initialization
 
-function _init(endCallback) {
+function _init(appRoles) {
     logger.debug("client apps testing");
 
-    async.parallel([
-            function (callback) {
-                _createClientApp('client', callback);
-            },
-            function (callback) {
-                _createClientApp('admin', callback);
-            },
-            function (callback) {
-                _createClientApp('manager', callback);
-            }
-        ],
-        function (err, results) {
-            if (err) {
-                endCallback && endCallback(err);
-                return;
-            }
-            endCallback && endCallback();
-        }
-    );
+    return q.all((appRoles || []).map(function (role) {
+        return _createClientApp(role);
+    }));
 }
 
 // #region private methods
 
-function _createClientApp(role, callback) {
+function _createClientApp(role) {
+    var deferred = q.defer();
+
     var clientApp = new models.ClientAppModel({
         appId: uuid.v1(),
         name: "test" + date.timestamp(),
@@ -50,10 +35,12 @@ function _createClientApp(role, callback) {
     clientApp.save(function (err, clientApp, affected) {
         if (err) {
             logger.error(err, clientApp, affected);
-            callback && callback(err);
+            return deferred.reject(err);
         }
-        callback && callback(null, clientApp);
+        deferred.resolve(clientApp);
     });
+
+    return deferred.promise;
 }
 
 function _getRoles(type) {

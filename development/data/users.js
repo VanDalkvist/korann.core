@@ -7,43 +7,49 @@
 var models = require('../../modules/db/app');
 var logger = require('../../modules/log').getLogger(module);
 var config = require('../config');
+var q = require('q');
 
 // #region initialization
 
-function test(user) {
-    dropUsers(user, function () {
-        createUser(user, function (err) {
-            if (err) {
-                return logger.error("Test failed. Error is: ", err);
-            }
-
-            logger.debug("Test passed.");
-        });
-    });
+function _test(users) {
+    return q.all((users || []).map(function (user) {
+            return _dropUser(user).then(function () {
+                return _createUser(user);
+            });
+        })
+    );
 }
 
 // #region private methods
 
-function dropUsers(user, callback) {
+function _dropUser(user) {
+    var deferred = q.defer();
+
     models.UserModel.findOneAndRemove({ name: user.name }, {}, function (err) {
-        if (err) throw err;
+        if (err) return deferred.reject(err);
 
         logger.info("User '", user.name, "' was deleted.");
-        callback();
+        deferred.resolve();
     });
+
+    return deferred.promise;
 }
 
-function createUser(user, callback) {
+function _createUser(user) {
+    var deferred = q.defer();
+
     var userModel = new models.UserModel(user);
     userModel.save(function userSaved(err) {
-        if (err) return callback(err);
+        if (err) return deferred.reject(err);
 
         logger.info("User was saved successfully - ", user);
 
-        callback();
+        deferred.resolve();
     });
+
+    return deferred.promise;
 }
 
 // #region exports
 
-exports.run = test;
+exports.run = _test;
