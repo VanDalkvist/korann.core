@@ -14,18 +14,18 @@ var async = require('async');
 // #region initialization
 
 function init(app) {
-    app.post('/app/auth', appAuth);
-    app.post('/user/login', userAuth);
-    app.post('/user/logout', userLogout);
+    app.post('/app/auth', _appAuth);
+    app.post('/user/login', _userSignIn);
+    app.post('/user/logout', _userSignOut);
 
-    app.all('/api/*', verifyAppAccess, verifyUserAccess);
+    app.all('/api/*', _verifyAppAccess, _verifyUserAccess);
 
     logger.debug("Initialization of authentication finished successfully.");
 }
 
 // #region private methods
 
-function appAuth(req, res, next) {
+function _appAuth(req, res, next) {
     async.waterfall([
         function (callback) {
             var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret };
@@ -39,7 +39,7 @@ function appAuth(req, res, next) {
             });
         },
         function (clientApp, appAuthInfo, callback) {
-            checkSecret(appAuthInfo, clientApp, function createSession(err) {
+            _checkSecret(appAuthInfo, clientApp, function createSession(err) {
                 if (err) return callback(err);
 
                 var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
@@ -78,10 +78,10 @@ function appAuth(req, res, next) {
     });
 }
 
-function userAuth(req, res, next) {
+function _userSignIn(req, res, next) {
     async.waterfall([
         function (callback) {
-            verifyAppAccess(req, res, function verifyCallback(err) {
+            _verifyAppAccess(req, res, function verifyCallback(err) {
                 if (err) return callback(err);
 
                 var credentials = req.body.cred;
@@ -131,10 +131,10 @@ function userAuth(req, res, next) {
     });
 }
 
-function userLogout(req, res, next) {
+function _userSignOut(req, res, next) {
     async.waterfall([
         function (callback) {
-            verifyAppAccess(req, res, function verifyCallback(err) {
+            _verifyAppAccess(req, res, function verifyCallback(err) {
                 if (err) return callback(err);
 
                 var credentials = req.body.cred;
@@ -172,10 +172,10 @@ function userLogout(req, res, next) {
     });
 }
 
-function checkSecret(authInfo, clientApp, next) {
+function _checkSecret(authInfo, clientApp, next) {
     var secretHash = calculateHash(clientApp.secret);
     if (secretHash !== authInfo.secretHash)
-        return next(new errors.HttpError(400, "Invalid authentication data: secret"));
+        return next(new errors.HttpError(401, "Invalid authentication data."));
 
     next(null, clientApp);
 }
@@ -184,25 +184,22 @@ function calculateHash(secret) {
     return secret;
 }
 
-function verifyAppAccess(req, res, next) {
-    var appInfo = {
-        appId: req.headers.appid,
-        accessToken: req.headers.token
-    };
+function _verifyAppAccess(req, res, next) {
+    var appInfo = { appId: req.headers.appid, accessToken: req.headers.token };
 
-    if (!appInfo.appId || !appInfo.accessToken) return next(new errors.HttpError(401, "Invalid appId"));
+    if (!appInfo.appId || !appInfo.accessToken) return next(new errors.HttpError(401, "Invalid app credentials."));
 
     models.AppSessionModel.findOne({ appId: appInfo.appId }, function findSession(err, appSession) {
         if (err) return next(err);
 
-        if (appSession.token !== appInfo.accessToken)
-            return next(new errors.HttpError(401, "Invalid access token."));
+        if (!models.AppSessionModel.checkSecret(appInfo.accessToken))
+            return next(new errors.HttpError(401, "Invalid app credentials."));
 
         next(null, appInfo.credentials);
     });
 }
 
-function verifyUserAccess(req, res, next) {
+function _verifyUserAccess(req, res, next) {
     var userSessionInfo = {
         sessionId: req.headers.session,
         sessionToken: req.headers.sessionToken
