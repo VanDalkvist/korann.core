@@ -28,9 +28,9 @@ function init(app) {
 function _appAuth(req, res, next) {
     async.waterfall([
         function (callback) {
-            var appAuthInfo = { appId: req.body.appId, secretHash: req.body.appSecret };
+            var appAuthInfo = { appId: req.body.appId, secret: req.body.appSecret };
 
-            models.ClientAppModel.findOne({ appId: appAuthInfo.appId }, function findAppCallback(err, clientApp) {
+            models.ClientAppModel.findOne({appId: appAuthInfo.appId}, function findAppCallback(err, clientApp) {
                 if (err) return callback(new errors.HttpError(400, err.message));
 
                 if (!clientApp) return callback(new errors.HttpError(401, "Invalid appId."));
@@ -39,19 +39,18 @@ function _appAuth(req, res, next) {
             });
         },
         function (clientApp, appAuthInfo, callback) {
-            _checkSecret(appAuthInfo, clientApp, function createSession(err) {
-                if (err) return callback(err);
+            if (!clientApp.checkSecret(appAuthInfo.secret))
+                return callback(new errors.HttpError(401, "Invalid authentication data."));
 
-                var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
+            var accessToken = crypto.createToken(clientApp.appId + clientApp.secret);
 
-                var appSession = new models.AppSessionModel({
-                    appId: clientApp.appId,
-                    token: accessToken,
-                    expired: config.appSession.expires
-                });
-
-                callback(null, appSession, clientApp);
+            var appSession = new models.AppSessionModel({
+                appId: clientApp.appId,
+                token: accessToken,
+                expired: config.appSession.expires
             });
+
+            callback(null, appSession, clientApp);
         },
         function (appSession, clientApp, callback) {
             appSession.save(function saveCallback(err) {
@@ -63,14 +62,14 @@ function _appAuth(req, res, next) {
             });
         },
         function (clientApp, appSession, callback) {
-            models.UserSessionModel.find({ appId: clientApp.appId }, function (err, sessions) {
+            models.UserSessionModel.find({appId: clientApp.appId}, function (err, sessions) {
                 if (err) return callback(err);
 
                 callback(null, appSession, sessions);
             });
         },
         function (appSession, sessions, callback) {
-            res.send({ token: appSession.token, expired: appSession.expires, sessions: sessions });
+            res.send({token: appSession.token, expired: appSession.expires, sessions: sessions});
         }
 
     ], function (err, result) {
@@ -107,7 +106,7 @@ function _userSignIn(req, res, next) {
                 userId: user._id,
                 appId: req.headers.appid,
                 expired: config.userSession.expires,
-                context: { username: user.name, roles: user.roles }
+                context: {username: user.name, roles: user.roles}
             });
 
             userSession.save(function saveCallback(err) {
@@ -145,7 +144,7 @@ function _userSignOut(req, res, next) {
             });
         },
         function (credentials, callback) {
-            models.UserSessionModel.findOne({ _id: credentials.sessionId }, function findSession(err, session) {
+            models.UserSessionModel.findOne({_id: credentials.sessionId}, function findSession(err, session) {
                 if (err) return callback(err);
 
                 if (!session) return callback(new errors.HttpError(401, "Session not found"));
@@ -165,35 +164,23 @@ function _userSignOut(req, res, next) {
             });
         },
         function (session) {
-            res.send(200, { sessionId: session._id });
+            res.send(200, {sessionId: session._id});
         }
     ], function (err) {
         next(err);
     });
 }
 
-function _checkSecret(authInfo, clientApp, next) {
-    var secretHash = calculateHash(clientApp.secret);
-    if (secretHash !== authInfo.secretHash)
-        return next(new errors.HttpError(401, "Invalid authentication data."));
-
-    next(null, clientApp);
-}
-
-function calculateHash(secret) {
-    return secret;
-}
-
 function _verifyAppAccess(req, res, next) {
-    var appInfo = { appId: req.headers.appid, accessToken: req.headers.token };
+    var appInfo = {appId: req.headers.appid, accessToken: req.headers.token};
 
     if (!appInfo.appId || !appInfo.accessToken) return next(new errors.HttpError(401, "Invalid app credentials."));
 
-    models.AppSessionModel.findOne({ appId: appInfo.appId }, function findSession(err, appSession) {
+    models.AppSessionModel.findOne({appId: appInfo.appId}, function findSession(err, appSession) {
         if (err) return next(err);
 
-        if (!models.AppSessionModel.checkSecret(appInfo.accessToken))
-            return next(new errors.HttpError(401, "Invalid app credentials."));
+        //if (!models.AppSessionModel.checkSecret(appInfo.accessToken))
+        //    return next(new errors.HttpError(401, "Invalid app credentials."));
 
         next(null, appInfo.credentials);
     });
@@ -207,7 +194,7 @@ function _verifyUserAccess(req, res, next) {
 
     if (!userSessionInfo.sessionId) return next(new errors.HttpError(401, "Invalid user session."));
 
-    models.UserSessionModel.findOne({ _id: userSessionInfo.sessionId }, function findSession(err, session) {
+    models.UserSessionModel.findOne({_id: userSessionInfo.sessionId}, function findSession(err, session) {
         if (err) return next(new errors.HttpError(500, err.message));
 
         if (!session) return next(new errors.HttpError(401, "Session not found."));

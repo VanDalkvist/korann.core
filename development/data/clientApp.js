@@ -26,10 +26,15 @@ function _init(appRoles) {
 function _createClientApp(role) {
     var deferred = q.defer();
 
+    var secret = crypto.randomString(64);
+
+    // todo: remove logs with secret
+    logger.debug('New secret have been created for ', role, ' - ', secret);
+
     var clientApp = new models.ClientAppModel({
         appId: uuid.v1(),
         name: "test" + date.timestamp(),
-        secret: crypto.randomString(64),
+        secret: secret,
         permissions: _getRoles(role)
     });
     clientApp.save(function (err, clientApp, affected) {
