@@ -19,6 +19,8 @@ function initModel() {
         expired: { type: Number, required: true }
     }, { collection: 'app.sessions' });
 
+    AppSessionSchema.index({ appId: 1 });
+
     // #region model
 
     return mongoose.model('AppSession', AppSessionSchema);

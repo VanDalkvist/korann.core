@@ -25,7 +25,7 @@ function initModel() {
         createdAt: {type: Date, default: Date.now }
     }, { collection: 'apps' });
 
-    // #region model
+    ClientAppSchema.index({ appId: 1 });
 
     ClientAppSchema.methods.encryptSecret = function (secret) {
         return crypto.createHmac('sha512', this.salt).update(secret).digest('hex');
@@ -48,6 +48,8 @@ function initModel() {
     ClientAppSchema.methods.checkSecret = function (secret) {
         return this.encryptSecret(secret) === this.secretHash;
     };
+
+    // #region model
 
     return mongoose.model('ClientApp', ClientAppSchema);
 }

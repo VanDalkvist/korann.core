@@ -20,6 +20,8 @@ function initModel() {
         context: { type: Schema.Types.Mixed }
     }, { collection: 'user.sessions' });
 
+    UserSessionSchema.index({ userId: 1 });
+
     // #region model
 
     return mongoose.model('UserSession', UserSessionSchema);

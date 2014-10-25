@@ -38,6 +38,8 @@ function getConfig(path) {
                 level: 'error',
                 filename: 'errors.log',
                 colorize: true,
+                prettyPrint: true,
+                json: false,
                 maxsize: 1000000,
                 handleExceptions: true
             })

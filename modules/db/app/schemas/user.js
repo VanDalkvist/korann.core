@@ -1,5 +1,5 @@
 /*
- *  
+ *  User schema and db model
  */
 
 // #region dependents
@@ -24,6 +24,8 @@ function init() {
         ],
         screenName: { type: String }
     });
+
+    UserSchema.index({ name: 1 });
 
     // #region configuration functions
 
