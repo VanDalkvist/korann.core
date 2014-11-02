@@ -19,7 +19,7 @@ function init(app, models) {
     app.delete('/api/categories/:id', remove);
 
     function getAll(req, res, next) {
-        return CategoryModel.find({ }, function (err, categories) {
+        return CategoryModel.find({}, function (err, categories) {
             if (err) return next(new errors.HttpError(500, err.message));
 
             return success(res, categories);
@@ -59,8 +59,8 @@ function init(app, models) {
 
     function update(req, res, next) {
         delete req.body._id;            // see http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate. _id property does not allow for update operation
-        var options = { new: true };    // for return new document
-        return CategoryModel.findOneAndUpdate(req.params.id, req.body, options, function (err, category) {
+        var options = {new: true};    // for return new document
+        return CategoryModel.findByIdAndUpdate(req.params.id, req.body, options, function (err, category) {
             if (err) {
                 if (err.name == 'ValidationError') {
                     return next(new errors.HttpError(400, "Validation error: " + err.message));
@@ -77,7 +77,7 @@ function init(app, models) {
     }
 
     function remove(req, res, next) {
-        return CategoryModel.findOneAndRemove({ _id: req.params.id }, { }, function (err, category) {
+        return CategoryModel.findByIdAndRemove(req.params.id, {}, function (err, category) {
             if (err) return next(new errors.HttpError(500, err.message));
 
             if (!category) return next(new errors.NotFoundError());
@@ -91,7 +91,7 @@ function init(app, models) {
 // #region private methods
 
 function success(res, data) {
-    return res.status(200).send({ data: data });
+    return res.status(200).send({data: data});
 }
 
 // #region exports

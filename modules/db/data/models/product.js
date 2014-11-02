@@ -22,13 +22,12 @@ function initModel() {
         },
         description: { type: String, required: true },
         brand: { type: String, required: true },
+        price: { type: Number, required: true },
         volume: { type: Number, required: true },
         images: [ ImageSchema ]
     });
 
     // #region validation
-
-    ProductSchema.path('name').validate(nameValidate);
 
     // #region model
 
@@ -36,10 +35,6 @@ function initModel() {
 }
 
 // #region private methods
-
-function nameValidate(value) {
-    return value && value.length > 5 && value.length < 70;
-}
 
 // #region exports
 
